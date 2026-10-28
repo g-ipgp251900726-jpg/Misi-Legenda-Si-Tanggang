@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi Legenda Si Tanggang - Kuiz Interaktif Bahasa Melayu Tahun 6</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Canvas Confetti for Victory -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- html2canvas for Certificate Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- MediaPipe Hands & Camera Utils for Gesture Recognition -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Google Fonts: Poppins & Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ocean: '#69C9F0',
+                        turquoise: '#65D6C2',
+                        gold: '#FFD166',
+                        coral: '#FF8E72',
+                        cream: '#FFF6E8',
+                        sand: '#F7E7CE'
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        poppins: ['Poppins', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'neu-flat': '8px 8px 16px #d1c8bc, -8px -8px 16px #ffffff',
+                        'neu-pressed': 'inset 4px 4px 8px #d1c8bc, inset -4px -4px 8px #ffffff',
+                        'neu-card': '10px 10px 20px rgba(105, 201, 240, 0.2), -10px -10px 20px #ffffff',
+                        'glow-gold': '0 0 20px rgba(255, 209, 102, 0.8)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg, #69C9F0 0%, #65D6C2 50%, #FFF6E8 100%);
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Floating Ship Animation */
+        @keyframes floatShip {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatShip 4s ease-in-out infinite;
+        }
+
+        /* Gentle Waves Animation */
+        @keyframes waveMove {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-25px); }
+            100% { transform: translateX(0); }
+        }
+        .animate-wave {
+            animation: waveMove 6s ease-in-out infinite;
+        }
+
+        /* Neumorphism Base Styles */
+        .neu-panel {
+            background: #FFF6E8;
+            box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.08), -8px -8px 24px rgba(255, 255, 255, 0.9);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .neu-button {
+            background: linear-gradient(145deg, #FFD166, #ffc742);
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.1), -4px -4px 10px rgba(255,255,255,0.7);
+            transition: all 0.2s ease;
+        }
+        .neu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 14px rgba(0,0,0,0.15), -6px -6px 14px rgba(255,255,255,0.9);
+        }
+        .neu-button:active {
+            transform: translateY(1px);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Certificate Styling */
+        .cert-border {
+            border: 12px solid #FFD166;
+            background: #FFF6E8;
+            position: relative;
+        }
+        .cert-border::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 3px dashed #65D6C2;
+            pointer-events: none;
+        }
+
+        /* Pulse Highlight */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255,209,102,0.6); }
+            50% { box-shadow: 0 0 30px rgba(255,209,102,1); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Hand Gesture Holding Circle Progress */
+        @keyframes holdProgress {
+            from { stroke-dashoffset: 100; }
+            to { stroke-dashoffset: 0; }
+        }
+        .gesture-hold-active {
+            box-shadow: 0 0 20px #FFD166, inset 0 0 10px #FFD166 !important;
+            border-color: #FFD166 !important;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-gray-800 relative">
+
+    <!-- Sound & Ambient Controls Floating Header -->
+    <header class="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <button id="btn-camera-toggle" onclick="toggleCamera()" class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white text-gray-700 hover:text-ocean transition flex items-center gap-2 font-semibold text-xs sm:text-sm">
+            <i id="cam-status-icon" class="fa-solid fa-video text-coral animate-pulse"></i>
+            <span id="cam-status-text">Kamera: Aktif</span>
+        </button>
+        <button id="btn-sound" onclick="toggleSound()" class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white text-gray-700 hover:text-ocean transition flex items-center gap-2 font-semibold text-xs sm:text-sm">
+            <i id="sound-icon" class="fa-solid fa-volume-high text-xl text-ocean"></i>
+            <span id="sound-text" class="hidden sm:inline">Muzik: ON</span>
+        </button>
+    </header>
+
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Sun / Clouds -->
+        <div class="absolute top-6 left-10 w-24 h-24 bg-gold rounded-full opacity-80 blur-xl"></div>
+        <div class="absolute top-12 left-1/4 text-white/40 text-6xl"><i class="fa-solid fa-cloud"></i></div>
+        <div class="absolute top-8 right-1/3 text-white/30 text-8xl"><i class="fa-solid fa-cloud"></i></div>
+
+        <!-- Wave SVGs at Bottom -->
+        <div class="absolute bottom-0 left-0 right-0 animate-wave opacity-60">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 36C240 72 480 0 720 36C960 72 1200 12 1440 36V120H0V36Z" fill="#65D6C2"/>
+            </svg>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 animate-wave opacity-40" style="animation-delay: -3s;">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 60C360 0 720 80 1080 20C1260 -10 1380 40 1440 60V120H0V60Z" fill="#69C9F0"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow flex items-center justify-center p-3 sm:p-6 z-10 my-6">
+
+        <!-- ================= ADVENTURE MAP & QUIZ SCREEN (DIRECT START) ================= -->
+        <section id="screen-quiz" class="w-full max-w-5xl neu-panel p-4 sm:p-6 transition-all duration-500">
+            
+            <!-- Top Grid: Camera Preview & Gesture Legend Banner -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                
+                <!-- Live Camera Feed Widget -->
+                <div class="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg border-2 border-white aspect-video flex items-center justify-center">
+                    <!-- Hidden Video element for MediaPipe feed -->
+                    <video id="webcam" class="absolute inset-0 w-full h-full object-cover -scale-x-100" playsinline></video>
+                    <canvas id="canvas-out" class="absolute inset-0 w-full h-full object-cover -scale-x-100"></canvas>
+                    
+                    <!-- Overlay Badge inside Camera -->
+                    <div id="cam-overlay-badge" class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 z-20">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span id="detected-gesture-label">Mengesan Gesture...</span>
+                    </div>
+
+                    <!-- Visual Hold Ring Overlay on Video -->
+                    <div id="gesture-timer-overlay" class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden z-30">
+                        <div class="text-center text-white">
+                            <div class="text-3xl font-black text-gold animate-bounce" id="hold-countdown-text">A</div>
+                            <span class="text-[11px] font-bold tracking-wider">PEGANG 1 SAAT...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hand Gesture Guide Instructions -->
+                <div class="md:col-span-2 bg-white/80 backdrop-blur-sm p-3 sm:p-4 rounded-2xl border border-white shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-teal-800 uppercase tracking-wider bg-turquoise/20 px-3 py-1 rounded-full">
+                            🖐️ Kawalan Gesture Jari Masa Nyata
+                        </span>
+                        <span class="text-[11px] text-gray-500 font-medium">Boleh juga klik/Sentuh!</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div class="bg-cream/80 p-2 rounded-xl border border-coral/20">
+                            <span class="text-xl sm:text-2xl block">☝️</span>
+                            <span class="text-[11px] font-bold text-gray-700 block">1 Jari</span>
+                            <span class="text-xs font-black text-coral">Pilihan A</span>
+                        </div>
+                        <div class="bg-cream/80 p-2 rounded-xl border border-ocean/20">
+                            <span class="text-xl sm:text-2xl block">✌️</span>
+                            <span class="text-[11px] font-bold text-gray-700 block">2 Jari</span>
+                            <span class="text-xs font-black text-ocean">Pilihan B</span>
+                        </div>
+                        <div class="bg-cream/80 p-2 rounded-xl border border-turquoise/20">
+                            <span class="text-xl sm:text-2xl block">🤟</span>
+                            <span class="text-[11px] font-bold text-gray-700 block">3 Jari</span>
+                            <span class="text-xs font-black text-teal-600">Pilihan C</span>
+                        </div>
+                        <div class="bg-cream/80 p-2 rounded-xl border border-gold/40">
+                            <span class="text-xl sm:text-2xl block">🖐️</span>
+                            <span class="text-[11px] font-bold text-gray-700 block">4 Jari</span>
+                            <span class="text-xs font-black text-yellow-600">Pilihan D</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Header & Level Progress -->
+            <div class="mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2">
+                    <div>
+                        <span class="text-xs font-bold text-teal-800 uppercase tracking-widest bg-turquoise/30 px-3 py-1 rounded-full">
+                            Bahasa Melayu Tahun 6
+                        </span>
+                        <h2 id="stage-title" class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">
+                            Permulaan Cerita
+                        </h2>
+                    </div>
+                    <div class="bg-white/80 px-4 py-1.5 rounded-2xl shadow-sm border border-white text-right">
+                        <span class="text-[10px] font-semibold text-gray-500 block">Kemajuan Pengembaraan</span>
+                        <span id="progress-text" class="text-sm font-bold text-ocean">Soalan 1 daripada 4</span>
+                    </div>
+                </div>
+
+                <!-- Interactive 4-Stage Story Map Track -->
+                <div class="relative bg-white/60 p-2.5 rounded-2xl border border-white/80 shadow-inner">
+                    <!-- Progress Bar Background Line -->
+                    <div class="absolute top-1/2 left-8 right-8 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0"></div>
+                    <div id="map-progress-line" class="absolute top-1/2 left-8 h-2 bg-gradient-to-r from-ocean to-turquoise -translate-y-1/2 rounded-full z-0 transition-all duration-500" style="width: 0%;"></div>
+
+                    <!-- Stage Icons -->
+                    <div class="relative z-10 flex justify-between items-center">
+                        <!-- Node 1 -->
+                        <div id="node-1" class="flex flex-col items-center gap-1 group">
+                            <div class="node-circle w-10 h-10 rounded-full bg-gold text-gray-800 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300 ring-4 ring-gold/40">
+                                <i class="fa-solid fa-house-chimney"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-700">1. Kampung</span>
+                        </div>
+                        <!-- Node 2 -->
+                        <div id="node-2" class="flex flex-col items-center gap-1 group">
+                            <div class="node-circle w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300">
+                                <i class="fa-solid fa-ship"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-500">2. Laut</span>
+                        </div>
+                        <!-- Node 3 -->
+                        <div id="node-3" class="flex flex-col items-center gap-1 group">
+                            <div class="node-circle w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300">
+                                <i class="fa-solid fa-people-arrows"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-500">3. Konflik</span>
+                        </div>
+                        <!-- Node 4 -->
+                        <div id="node-4" class="flex flex-col items-center gap-1 group">
+                            <div class="node-circle w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300">
+                                <i class="fa-solid fa-mountain"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-500">4. Sumpahan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUESTION CARD CONTAINER -->
+            <div id="question-card" class="bg-white/90 rounded-3xl p-5 sm:p-6 shadow-xl border border-white relative overflow-hidden transition-all duration-300">
+                <!-- Location Tag Badge -->
+                <div class="inline-flex items-center gap-2 bg-cream text-coral text-xs font-bold px-3 py-1 rounded-full border border-coral/30 mb-3">
+                    <i class="fa-solid fa-map-pin text-coral"></i>
+                    <span id="question-stage-tag">Struktur: Permulaan Cerita (Kampung Si Tanggang)</span>
+                </div>
+
+                <!-- Question Text -->
+                <h3 id="question-text" class="text-base sm:text-xl font-bold text-gray-800 mb-4 leading-relaxed">
+                    Bagaimanakah keadaan hidup Tanggang pada permulaan cerita sebelum dia berjaya merantau?
+                </h3>
+
+                <!-- Answer Choices (A, B, C, D) -->
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Dynamic Buttons Inserted via JS -->
+                </div>
+
+                <!-- Feedback Banner (Correct / Wrong Explanation) -->
+                <div id="feedback-box" class="mt-5 p-4 rounded-2xl hidden transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <div id="feedback-icon" class="text-2xl"></div>
+                        <div class="flex-1">
+                            <h4 id="feedback-title" class="font-bold text-base mb-1"></h4>
+                            <p id="feedback-desc" class="text-xs sm:text-sm leading-relaxed"></p>
+                        </div>
+                    </div>
+                    <!-- Action Button Inside Feedback -->
+                    <div class="mt-3 text-right">
+                        <button id="btn-next" onclick="nextQuestion()" class="neu-button px-5 py-2 rounded-xl font-bold text-gray-800 text-xs sm:text-sm inline-flex items-center gap-2">
+                            <span>Seterusnya</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <button id="btn-retry" onclick="retryQuestion()" class="bg-coral text-white hover:bg-coral/90 px-5 py-2 rounded-xl font-bold text-xs sm:text-sm hidden inline-flex items-center gap-2 shadow-md">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>Cuba Lagi</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= RESULTS SCREEN (NO PERSONAL DATA REQUIRED) ================= -->
+        <section id="screen-result" class="w-full max-w-3xl neu-panel p-6 sm:p-10 hidden text-center transition-all duration-500">
+            
+            <div class="mb-4 inline-block">
+                <span class="bg-gold/30 text-yellow-800 text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-wider border border-gold">
+                    🎉 Tahniah! Misi Selesai
+                </span>
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
+                Keputusan Pengembaraan
+            </h2>
+            <p class="text-gray-600 mb-6 font-medium">Berikut adalah rekod pencapaian anda dalam Misi Legenda Si Tanggang:</p>
+
+            <!-- Score Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-md mx-auto">
+                <div class="bg-white/80 p-5 rounded-2xl border border-white shadow-sm">
+                    <span class="text-gray-500 text-xs font-semibold uppercase block mb-1">Jawapan Betul</span>
+                    <span id="res-correct" class="text-2xl font-bold text-gray-800">0 / 4</span>
+                </div>
+                <div class="bg-white/80 p-5 rounded-2xl border border-white shadow-sm">
+                    <span class="text-gray-500 text-xs font-semibold uppercase block mb-1">Markah Keseluruhan</span>
+                    <span id="res-score" class="text-3xl font-black text-ocean">0%</span>
+                </div>
+            </div>
+
+            <div id="encouragement-message" class="p-4 rounded-2xl bg-turquoise/20 border border-turquoise/40 text-teal-900 font-bold mb-8 text-sm sm:text-base">
+                <!-- Message inserted via JS -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="restartQuiz()" class="neu-button font-bold px-8 py-3.5 rounded-2xl text-gray-800 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right text-coral"></i>
+                    <span>Main Semula</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="text-center py-3 text-xs font-semibold text-gray-600 z-10">
+        Misi Legenda Si Tanggang &copy; Bahasa Melayu Tahun 6 — Kawalan Gesture Tangan AI
+    </footer>
+
+    <!-- JS LOGIC, MEDIAPIPE HANDS & AUDIO SYNTHESIS -->
+    <script>
+        /* ================= 1. AUDIO SYNTHESIS ENGINE ================= */
+        let audioCtx = null;
+        let isSoundOn = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundOn) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                freqs.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.1);
+                    gain.gain.setValueAtTime(0.3, now + index * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.1 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + index * 0.1);
+                    osc.stop(now + index * 0.1 + 0.35);
+                });
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'click') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'victory') {
+                const melody = [
+                    {f: 523.25, d: 0.15}, {f: 659.25, d: 0.15}, {f: 783.99, d: 0.15},
+                    {f: 1046.50, d: 0.4}
+                ];
+                let timeOffset = 0;
+                melody.forEach(note => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.f, now + timeOffset);
+                    gain.gain.setValueAtTime(0.3, now + timeOffset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + note.d);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + timeOffset);
+                    osc.stop(now + timeOffset + note.d);
+                    timeOffset += note.d + 0.05;
+                });
+            }
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            const icon = document.getElementById('sound-icon');
+            const text = document.getElementById('sound-text');
+            if (isSoundOn) {
+                icon.className = "fa-solid fa-volume-high text-xl text-ocean";
+                text.innerText = "Muzik: ON";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-xl text-gray-400";
+                text.innerText = "Muzik: OFF";
+            }
+        }
+
+
+        /* ================= 2. QUIZ DATA ================= */
+        const quizData = [
+            {
+                id: 1,
+                stage: "1. Permulaan Cerita",
+                tag: "Struktur: Permulaan Cerita (Kampung Si Tanggang)",
+                question: "Bagaimanakah keadaan hidup Tanggang pada permulaan cerita sebelum dia berjaya merantau?",
+                options: [
+                    "A) Dia tinggal di istana besar dan memakai pakaian mewah bersadur emas.",
+                    "B) Dia hidup miskin di sebuah kampung nelayan, berpakaian koyak, dan sering kelaparan.",
+                    "C) Dia bekerja sebagai kapten kapal laut yang terkenal di seluruh pelusuk negeri.",
+                    "D) Dia merupakan anak kepada seorang saudagar kaya yang sangat dihormati."
+                ],
+                correct: 1,
+                explanation: "Pada permulaan cerita, Tanggang hidup dalam kemiskinan bersama ibunya di kampung nelayan sebelum dia mendapat peluang berlayar merantau."
+            },
+            {
+                id: 2,
+                stage: "2. Peristiwa",
+                tag: "Struktur: Peristiwa (Pengembaraan di Laut)",
+                question: "Apakah kejayaan besar yang dicapai oleh Tanggang selepas bertahun-tahun merantau jauh dari kampungnya?",
+                options: [
+                    "A) Dia berjaya menjadi seorang saudagar kaya, berpakaian sutera, dan berkahwin dengan anak perempuan kapten kapal.",
+                    "B) Dia dilantik menjadi ketua kampung di tempat kelahirannya sendiri.",
+                    "C) Dia berjaya membina sebuah istana batu yang besar di tepi pantai.",
+                    "D) Dia menjadi seorang guru yang mengajar anak-anak muda berlayar."
+                ],
+                correct: 0,
+                explanation: "Dalam bahagian peristiwa cerita, usaha Tanggang merantau membuah hasil sehingga dia menjadi kaya-raya, berkahwin dengan puteri/anak kapten kapal, dan memiliki kapal sendiri."
+            },
+            {
+                id: 3,
+                stage: "3. Konflik",
+                tag: "Struktur: Konflik (Pertemuan dengan Ibu)",
+                question: "Apakah tindakan biadap yang dilakukan oleh Tanggang apabila ibunya datang menegurnya di tepi pantai?",
+                options: [
+                    "A) Dia memberi ibunya banyak wang emas sebagai tanda terima kasih.",
+                    "B) Dia mengajak ibunya naik ke atas kapal mewah untuk tinggal bersamanya.",
+                    "C) Dia berpura-pura tidak mengenali ibunya dan menghalau wanita tua itu kerana merasa malu.",
+                    "D) Dia menangis teresak-esak kerana terlalu rindu akan masakan ibunya."
+                ],
+                correct: 2,
+                explanation: "Kemuncak konflik berlaku apabila Tanggang berasa malu dengan keadaan ibunya yang miskin lalu menghalau dan mengaku ibunya bukan ibu kandungnya."
+            },
+            {
+                id: 4,
+                stage: "4. Pengakhiran",
+                tag: "Struktur: Pengakhiran (Sumpahan Batu)",
+                question: "Apakah balasan atau pengakhiran yang diterima oleh Tanggang akibat perbuatannya terhadap ibunya?",
+                options: [
+                    "A) Dia selamat sampai ke negeri kaya dan hidup bahagia selama-lamanya.",
+                    "B) Dia insaf lalu pulang ke pangkuan ibunya untuk memohon maaf.",
+                    "C) Kapalnya karam dan dia menjadi pelayar yang hilang di tengah lautan.",
+                    "D) Dia disumpah menjadi batu bersama isteri, kru, dan kapalnya akibat doa ibunya."
+                ],
+                correct: 3,
+                explanation: "Pengakhiran cerita membawa ikhtibar trauma di mana akibat menderhakai ibu, ribut petir melanda dan Tanggang disumpah menjadi batu."
+            }
+        ];
+
+
+        /* ================= 3. STATE MANAGEMENT ================= */
+        let currentQuestionIndex = 0;
+        let firstAttempts = [null, null, null, null];
+        let hasAnsweredCurrent = false;
+
+        // Gesture state & holding timers
+        let activeDetectedGesture = null; // 0 (A), 1 (B), 2 (C), 3 (D)
+        let gestureHoldStartTime = null;
+        const HOLD_DURATION_MS = 1000; // 1 second hold needed to confirm
+        let isCameraActive = true;
+        let cameraStreamObj = null;
+
+        /* ================= 4. MEDIAPIPE HANDS GESTURE RECOGNITION ================= */
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('canvas-out');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        function countFingers(landmarks) {
+            // Landmark Indices: Thumb (4), Index (8), Middle (12), Ring (16), Pinky (20)
+            let count = 0;
+
+            // Index finger: Tip (8) above PIP joint (6)
+            if (landmarks[8].y < landmarks[6].y) count++;
+            // Middle finger: Tip (12) above PIP joint (10)
+            if (landmarks[12].y < landmarks[10].y) count++;
+            // Ring finger: Tip (16) above PIP joint (14)
+            if (landmarks[16].y < landmarks[14].y) count++;
+            // Pinky finger: Tip (20) above PIP joint (18)
+            if (landmarks[20].y < landmarks[18].y) count++;
+
+            return count; // returns 1, 2, 3, 4
+        }
+
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+            const badge = document.getElementById('detected-gesture-label');
+            const timerOverlay = document.getElementById('gesture-timer-overlay');
+            const countdownText = document.getElementById('hold-countdown-text');
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                const fingers = countFingers(landmarks);
+
+                if (fingers >= 1 && fingers <= 4 && !hasAnsweredCurrent) {
+                    const detectedOptionIdx = fingers - 1; // 0=A, 1=B, 2=C, 3=D
+                    const labelLetter = ['A', 'B', 'C', 'D'][detectedOptionIdx];
+
+                    badge.innerText = `Dikesan: ${fingers} Jari (Pilihan ${labelLetter})`;
+
+                    // Highlight UI choice button temporarily
+                    highlightOptionButton(detectedOptionIdx);
+
+                    // Handle 1-Second Hold Timer
+                    if (activeDetectedGesture === detectedOptionIdx) {
+                        const elapsed = Date.now() - gestureHoldStartTime;
+                        timerOverlay.classList.remove('hidden');
+                        countdownText.innerText = labelLetter;
+
+                        if (elapsed >= HOLD_DURATION_MS) {
+                            // Confirm Choice via Gesture!
+                            timerOverlay.classList.add('hidden');
+                            const targetBtn = document.querySelectorAll('#options-container button')[detectedOptionIdx];
+                            if (targetBtn) {
+                                checkAnswer(detectedOptionIdx, targetBtn);
+                            }
+                            activeDetectedGesture = null;
+                            gestureHoldStartTime = null;
+                        }
+                    } else {
+                        activeDetectedGesture = detectedOptionIdx;
+                        gestureHoldStartTime = Date.now();
+                    }
+
+                } else {
+                    resetGestureDetectionState();
+                }
+            } else {
+                resetGestureDetectionState();
+            }
+
+            canvasCtx.restore();
+        }
+
+        function resetGestureDetectionState() {
+            activeDetectedGesture = null;
+            gestureHoldStartTime = null;
+            document.getElementById('detected-gesture-label').innerText = "Mengesan Gesture Jari...";
+            document.getElementById('gesture-timer-overlay').classList.add('hidden');
+            
+            // Clear hover active styles on buttons if not answered
+            if (!hasAnsweredCurrent) {
+                const btns = document.querySelectorAll('#options-container button');
+                btns.forEach(b => b.classList.remove('gesture-hold-active'));
+            }
+        }
+
+        function highlightOptionButton(optionIdx) {
+            if (hasAnsweredCurrent) return;
+            const btns = document.querySelectorAll('#options-container button');
+            btns.forEach((b, idx) => {
+                if (idx === optionIdx) {
+                    b.classList.add('gesture-hold-active');
+                } else {
+                    b.classList.remove('gesture-hold-active');
+                }
+            });
+        }
+
+        // Initialize MediaPipe Hands
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.6,
+            minTrackingConfidence: 0.6
+        });
+
+        hands.onResults(onResults);
+
+        let camera = null;
+        function setupCamera() {
+            camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    if (isCameraActive) {
+                        await hands.send({ image: videoElement });
+                    }
+                },
+                width: 480,
+                height: 360
+            });
+            camera.start().catch(err => {
+                console.warn("Camera permission denied or unavailable:", err);
+                document.getElementById('cam-status-text').innerText = "Kamera: Matikan (Sentuhan Digunakan)";
+                document.getElementById('detected-gesture-label').innerText = "Gunakan Sentuhan / Klik";
+            });
+        }
+
+        function toggleCamera() {
+            isCameraActive = !isCameraActive;
+            const icon = document.getElementById('cam-status-icon');
+            const text = document.getElementById('cam-status-text');
+
+            if (isCameraActive) {
+                icon.className = "fa-solid fa-video text-coral animate-pulse";
+                text.innerText = "Kamera: Aktif";
+                if (camera) camera.start();
+            } else {
+                icon.className = "fa-solid fa-video-slash text-gray-400";
+                text.innerText = "Kamera: Matikan";
+                if (camera) camera.stop();
+                resetGestureDetectionState();
+            }
+        }
+
+        /* ================= 5. GAME NAVIGATION & QUIZ LOGIC ================= */
+
+        window.onload = function() {
+            loadQuestion(0);
+            setupCamera();
+        };
+
+        function loadQuestion(index) {
+            currentQuestionIndex = index;
+            hasAnsweredCurrent = false;
+            activeDetectedGesture = null;
+            gestureHoldStartTime = null;
+
+            const q = quizData[index];
+
+            document.getElementById('stage-title').innerText = q.stage;
+            document.getElementById('question-stage-tag').innerText = q.tag;
+            document.getElementById('progress-text').innerText = `Soalan ${index + 1} daripada 4`;
+            document.getElementById('question-text').innerText = q.question;
+
+            updateMapVisual(index);
+
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.classList.add('hidden');
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const gestureIcons = ["☝️ 1 Jari", "✌️ 2 Jari", "🤟 3 Jari", "🖐️ 4 Jari"];
+
+            q.options.forEach((optText, optIdx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-2xl bg-white border-2 border-gray-100 shadow-sm hover:border-ocean hover:bg-ocean/10 transition-all font-medium text-gray-800 flex items-center justify-between group";
+                btn.onclick = () => checkAnswer(optIdx, btn);
+                
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-cream text-coral border border-coral/30 flex items-center justify-center text-xs font-bold shrink-0">
+                            ${['A','B','C','D'][optIdx]}
+                        </span>
+                        <span class="text-xs sm:text-sm text-gray-800">${optText.substring(3)}</span>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-lg shrink-0 ml-2">
+                        ${gestureIcons[optIdx]}
+                    </span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function updateMapVisual(activeIndex) {
+            const linePercent = (activeIndex / 3) * 100;
+            document.getElementById('map-progress-line').style.width = `${linePercent}%`;
+
+            for (let i = 0; i < 4; i++) {
+                const nodeCircle = document.querySelector(`#node-${i + 1} .node-circle`);
+                const nodeText = document.querySelector(`#node-${i + 1} span`);
+
+                if (i <= activeIndex) {
+                    nodeCircle.className = "node-circle w-10 h-10 rounded-full bg-gold text-gray-800 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300 ring-4 ring-gold/40";
+                    nodeText.className = "text-[10px] font-bold text-gray-800";
+                } else {
+                    nodeCircle.className = "node-circle w-10 h-10 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-base font-bold shadow-md transition-all duration-300";
+                    nodeText.className = "text-[10px] font-bold text-gray-400";
+                }
+            }
+        }
+
+        function checkAnswer(selectedIndex, selectedBtn) {
+            if (hasAnsweredCurrent) return;
+
+            const q = quizData[currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.correct);
+
+            if (firstAttempts[currentQuestionIndex] === null) {
+                firstAttempts[currentQuestionIndex] = isCorrect;
+            }
+
+            hasAnsweredCurrent = true;
+
+            const allBtns = document.querySelectorAll('#options-container button');
+            allBtns.forEach((b) => b.disabled = true);
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackDesc = document.getElementById('feedback-desc');
+            const btnNext = document.getElementById('btn-next');
+            const btnRetry = document.getElementById('btn-retry');
+
+            feedbackBox.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSound('correct');
+                selectedBtn.classList.remove('bg-white', 'hover:bg-ocean/10', 'gesture-hold-active');
+                selectedBtn.classList.add('bg-turquoise/30', 'border-turquoise', 'text-teal-900', 'ring-2', 'ring-turquoise');
+
+                feedbackBox.className = "mt-5 p-4 rounded-2xl bg-teal-50 border-2 border-turquoise text-teal-900 transition-all duration-300";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check text-turquoise"></i>`;
+                feedbackTitle.innerText = "Jawapan Betul! Syabas 🎉";
+                feedbackDesc.innerHTML = `<strong>Penerangan:</strong> ${q.explanation}`;
+
+                btnNext.classList.remove('hidden');
+                btnRetry.classList.add('hidden');
+
+                confetti({
+                    particleCount: 40,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+
+            } else {
+                playSound('wrong');
+                selectedBtn.classList.remove('bg-white', 'hover:bg-ocean/10', 'gesture-hold-active');
+                selectedBtn.classList.add('bg-coral/20', 'border-coral', 'text-coral', 'ring-2', 'ring-coral');
+
+                feedbackBox.className = "mt-5 p-4 rounded-2xl bg-orange-50 border-2 border-coral text-coral transition-all duration-300";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-coral"></i>`;
+                feedbackTitle.innerText = "Jawapan Kurang Tepat 🌊";
+                feedbackDesc.innerHTML = `Jangan putus asa! Cuba lagi untuk meneruskan pengembaraan.`;
+
+                btnNext.classList.add('hidden');
+                btnRetry.classList.remove('hidden');
+            }
+        }
+
+        function retryQuestion() {
+            playSound('click');
+            loadQuestion(currentQuestionIndex);
+        }
+
+        function nextQuestion() {
+            playSound('click');
+            if (currentQuestionIndex < quizData.length - 1) {
+                loadQuestion(currentQuestionIndex + 1);
+            } else {
+                showResults();
+            }
+        }
+
+        /* ================= 6. RESULTS SCREEN ================= */
+
+        function showResults() {
+            playSound('victory');
+
+            const correctCount = firstAttempts.filter(val => val === true).length;
+            const percentage = (correctCount / 4) * 100;
+
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            document.getElementById('res-correct').innerText = `${correctCount} / 4`;
+            document.getElementById('res-score').innerText = `${percentage}%`;
+
+            const msgBox = document.getElementById('encouragement-message');
+            if (percentage === 100) {
+                msgBox.innerText = "🌟 Luar Biasa! Anda seorang Penjelajah Legenda Sebenar yang sangat memahami struktur cerita Si Tanggang!";
+            } else if (percentage >= 75) {
+                msgBox.innerText = "👍 Syabas! Pemahaman anda tentang cerita rakyat Si Tanggang sangat baik!";
+            } else {
+                msgBox.innerText = "💪 Usaha yang bagus! Mari ulang semula kuiz untuk mendapat keputusan yang lebih cemerlang!";
+            }
+
+            confetti({
+                particleCount: 120,
+                spread: 100,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function restartQuiz() {
+            playSound('click');
+            firstAttempts = [null, null, null, null];
+            currentQuestionIndex = 0;
+            hasAnsweredCurrent = false;
+
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+
+            loadQuestion(0);
+        }
+    </script>
+</body>
+</html>
